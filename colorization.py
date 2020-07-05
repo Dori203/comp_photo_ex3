@@ -36,8 +36,7 @@ def optimize_latent_codes(args):
 	generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
 	generated_img = ((generated_img + 1) / 2) * 255
 
-	original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
-
+    original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
     greyscale_img = convert_to_greyscale(original_img)
     print("greyscale image shape: {}".format(greyscale_img.shape))
 
