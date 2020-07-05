@@ -19,7 +19,8 @@ STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBB
 
 def convert_to_greyscale(rgb):
     print("rgb shape: {}".format(rgb.shape))
-    return np.dot(rgb, [0.2126, 0.7152, 0.0722])
+    # return np.dot(rgb, [0.2126, 0.7152, 0.0722])
+    return tf.matmul(rgb, tf.expand_dims([0.2126, 0.7152, 0.0722], 0))
 
 def optimize_latent_codes(args):
     tflib.init_tf()
