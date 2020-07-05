@@ -98,10 +98,16 @@ def add_motion_blur(image, kernel_size, angle):
     # get kernel
     kernel = motion_blur_kernel(kernel_size, angle)
 
-    # convolve image.
-    for i in range(2):
-        image[:,:,i] = convolve(image[:,:,i], kernel)
-    return image
+    # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
+    gauss_kernel = kernel[:, :, tf.newaxis, tf.newaxis]
+
+    # Convolve.
+    result = tf.nn.conv2d(image, gauss_kernel, padding="SAME")
+
+    # # convolve image.
+    # for i in range(2):
+    #     image[:,:,i] = convolve(image[:,:,i], kernel)
+    return result
 
 def optimize_latent_codes(args):
     tflib.init_tf()
