@@ -47,10 +47,13 @@ def optimize_latent_codes(args):
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
+    print("generated_img_resized_to_originall shape is: ", generated_img_resized_to_original.shape)
+
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
         convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
+    print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
     print("generated image shape is: ", generated_img_for_display.shape)
