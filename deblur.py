@@ -102,7 +102,7 @@ def add_motion_blur(image, kernel_size, angle):
     gauss_kernel = kernel[:, :, tf.newaxis, tf.newaxis]
 
     # Convolve.
-    image = tf.reshape(image, [1, image.shape[0], image.shape[1], image.shape[2]])
+    image = tf.reshape(image, [1, image.shape[1], image.shape[2], image.shape[3]])
     result = tf.nn.conv2d(image, gauss_kernel, padding="SAME")
 
     # for i in range(2):
