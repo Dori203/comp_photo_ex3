@@ -22,7 +22,7 @@ def convert_to_greyscale(rgb):
     # return np.dot(rgb, [0.2126, 0.7152, 0.0722])
     greyscale =  tf.linalg.matvec(rgb, tf.constant([0.2126, 0.7152, 0.0722], shape=[3]))
     print("greyscale shape: {}".format(greyscale.shape))
-    return greyscale
+    return tf.expand_dims(greyscale, -1)
 
 def optimize_latent_codes(args):
     tflib.init_tf()
