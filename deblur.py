@@ -126,7 +126,7 @@ def optimize_latent_codes(args):
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
-    generated_img_blurred_for_perceptual = add_motion_blur(generated_img_resized_to_original, 5, 1)
+    generated_img_blurred_for_perceptual = add_motion_blur(tf.make_ndarray(generated_img_resized_to_original), 5, 1)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
         generated_img_blurred_for_perceptual * degradation_mask, tuple(args.perceptual_img_size),
@@ -172,7 +172,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    #degradation_mask: mask[np.newaxis, ...]
+                    degradation_mask: corrupted_img[np.newaxis, ...]
                 }
             )
 
@@ -182,7 +182,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                #degradation_mask: mask[np.newaxis, ...]
+                degradation_mask: corrupted_img[np.newaxis, ...]
             }
         )
 
