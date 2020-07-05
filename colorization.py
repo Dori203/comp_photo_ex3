@@ -45,6 +45,7 @@ def optimize_latent_codes(args):
     degraded_img_resized_for_perceptual = tf.image.resize_images(
         greyscale_img, tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
+    print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
 
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR

@@ -8,7 +8,7 @@ class PerceptualModel(Model):
 	def __init__(self, img_size):
 		super().__init__()
 
-		vgg = vgg16.VGG16(include_top=False, input_shape=(img_size[0], img_size[1], 3))
+		vgg = vgg16.VGG16(include_top=False, input_shape=(img_size[0], img_size[1], 1))
 		layer_ids = [2, 5, 9, 13, 17]
 		layer_outputs = [Flatten()(vgg.layers[layer_id].output) for layer_id in layer_ids]
 		features = Concatenate(axis=-1)(layer_outputs)
