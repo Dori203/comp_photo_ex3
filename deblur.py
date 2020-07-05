@@ -100,7 +100,7 @@ def add_motion_blur(image, kernel_size, angle):
     kernel_3d = np.dstack((kernel, kernel, kernel))
 
     # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
-    gauss_kernel = kernel_3d.reshape((15, 15, 1, 1))
+    gauss_kernel = kernel.reshape((15, 15, 1, 1))
 
     # Convolve.
     image = tf.reshape(image, [3, image.shape[1], image.shape[2], 1])
