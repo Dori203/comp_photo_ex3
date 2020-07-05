@@ -18,10 +18,10 @@ STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBB
 
 
 def convert_to_greyscale(rgb):
-    print("rgb shape: {}".format(rgb.shape))
+    # print("rgb shape: {}".format(rgb.shape))
     # return np.dot(rgb, [0.2126, 0.7152, 0.0722])
     greyscale =  tf.linalg.matvec(rgb, tf.constant([0.2126, 0.7152, 0.0722], shape=[3]))
-    print("greyscale shape: {}".format(greyscale.shape))
+    # print("greyscale shape: {}".format(greyscale.shape))
     return tf.expand_dims(greyscale, -1)
 
 def optimize_latent_codes(args):
@@ -39,12 +39,10 @@ def optimize_latent_codes(args):
     generated_img = ((generated_img + 1) / 2) * 255
 
     original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
-    greyscale_img = convert_to_greyscale(original_img)
-    print("greyscale image shape: {}".format(greyscale_img.shape))
 
-    degraded_img_resized_for_perceptual = tf.image.resize_images(
-        greyscale_img, tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
-    )
+    degraded_img_resized_for_perceptual = tf.image.grayscale_to_rgb(tf.image.resize_images(
+        convert_to_greyscale(original_img), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+    ))
     print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
 
     generated_img_resized_to_original = tf.image.resize_images(
@@ -53,9 +51,9 @@ def optimize_latent_codes(args):
     print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
 
-    generated_img_resized_for_perceptual = tf.image.resize_images(
+    generated_img_resized_for_perceptual = tf.image.grayscale_to_rgb(tf.image.resize_images(
         convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
-    )
+    ))
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
