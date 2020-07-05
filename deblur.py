@@ -90,7 +90,7 @@ def random_motion_blur(image, list_of_kernel_sizes):
 
 def add_motion_blur(image, kernel_size, angle):
     """
-    :param image: a grayscale image with values in the [0, 1] range of type float64.
+    :param image: a RGB image with values in the [0, 1] range of type float64.
     :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
     :param angle: an angle in radians in the range [0, π).
     :return:
@@ -99,8 +99,9 @@ def add_motion_blur(image, kernel_size, angle):
     kernel = motion_blur_kernel(kernel_size, angle)
 
     # convolve image.
-    conv_image = convolve(image, kernel)
-    return conv_image
+    for i in range(2):
+        image[:,:,i] = convolve(image[:,:,i], kernel)
+    return image
 
 def optimize_latent_codes(args):
     tflib.init_tf()
