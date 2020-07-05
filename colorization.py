@@ -38,8 +38,11 @@ def optimize_latent_codes(args):
 
 	original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
 
+    greyscale_img = convert_to_greyscale(original_img)
+    print("greyscale image shape: {}".format(greyscale_img.shape))
+
 	degraded_img_resized_for_perceptual = tf.image.resize_images(
-		convert_to_greyscale(original_img), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        greyscale_img, tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
 	)
 
 	generated_img_resized_to_original = tf.image.resize_images(
