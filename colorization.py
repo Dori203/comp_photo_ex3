@@ -75,11 +75,11 @@ def optimize_latent_codes(args):
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
 
-        img = tf.image.convert_image_dtype(img, dtype=tf.float32, saturate=False)
+        # img = tf.image.convert_image_dtype(img, dtype=tf.float32, saturate=False)
 
-        corrupted_img = convert_to_greyscale(img)
+        greyscale_img = np.dot(img, [0.2126, 0.7152, 0.0722])
 
-        imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
+        imageio.imwrite(os.path.join(args.corruptions_dir, img_name), greyscale_img)
 
         sess.run(tf.variables_initializer([latent_code] + optimizer.variables()))
 
