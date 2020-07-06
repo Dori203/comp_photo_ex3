@@ -106,7 +106,7 @@ def add_motion_blur(image, kernel_size, angle):
     # Convolve.
     #image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
     #image = tf.expand_dims(image, 0)
-    image = image.astype(np.float32)
+
 
     pointwise_filter = tf.eye(3, batch_shape=[1, 1])
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
@@ -168,6 +168,8 @@ def optimize_latent_codes(args):
     for img_name in img_names:
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
+        # change image from int to float
+        img = np.float32(img / 255)
         mask = motion_blur_kernel(KERNEL_SIZE, 1)
 
         corrupted_img = add_motion_blur(img,KERNEL_SIZE,1)
