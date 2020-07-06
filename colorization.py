@@ -34,7 +34,7 @@ def optimize_latent_codes(args):
         name='latent_code', shape=(1, 18, 512), dtype='float32', initializer=tf.initializers.zeros()
     )
 
-    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
+    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=True)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
 
@@ -52,7 +52,7 @@ def optimize_latent_codes(args):
 
 
     generated_img_resized_for_perceptual = tf.image.grayscale_to_rgb(tf.image.resize_images(
-        convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size),method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     ))
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
