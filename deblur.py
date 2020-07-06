@@ -104,19 +104,10 @@ def add_motion_blur(image, kernel_size, angle):
     gauss_kernel = tf.convert_to_tensor(kernel_3d)
     gauss_kernel = tf.reshape(gauss_kernel,(kernel_size, kernel_size, 3, 1))
     # Convolve.
-    #image = tf.reshape(image, [3, image.shape[1], image.shape[2], 1])
     image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
 
     pointwise_filter = tf.eye(3, batch_shape=[1, 1])
-    print("image.shape inside deblur", image.shape)
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
-    print("result.shape inside deblur", result.shape)
-    # for i in range(2):
-    #     image[:,:,i] = tf.nn.conv2d(image[:,:,i], gauss_kernel, padding="SAME")
-
-    # # convolve image.
-    # for i in range(2):
-    #     image[:,:,i] = convolve(image[:,:,i], kernel)
     return result
 
 def optimize_latent_codes(args):
@@ -140,23 +131,24 @@ def optimize_latent_codes(args):
         add_motion_blur(original_img,KERNEL_SIZE,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
-    print("degraded_img_resized_for_perceptual shape is", degraded_img_resized_for_perceptual.shape)
+    print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
 
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
+    print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
+
     generated_img_resized_for_perceptual = tf.image.resize_images(
         add_motion_blur(generated_img_resized_to_original,KERNEL_SIZE,1), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
+    print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
 
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
 
-    print("generated_img_resized_for_perceptual shape is", generated_img_resized_for_perceptual.shape)
-    print("args.perceptual_img_size shape is", args.perceptual_img_size)
-
+    print("generated image shape is: ", generated_img_for_display.shape)
 
     perceptual_model = PerceptualModel(img_size=args.perceptual_img_size)
     generated_img_features = perceptual_model(generated_img_resized_for_perceptual)
