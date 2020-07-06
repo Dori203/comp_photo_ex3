@@ -62,7 +62,7 @@ def motion_blur_kernel(kernel_size, angle):
             p1 = (half_size - int(round(alpha * half_size)), 2*half_size)
             p2 = (kernel_size - 1 - p1[0], kernel_size-1 - p1[1])
     rr, cc = line(p1[0], p1[1], p2[0], p2[1])
-    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float64)
+    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
     kernel[rr, cc] = 1.0
     kernel /= kernel.sum()
     return kernel
