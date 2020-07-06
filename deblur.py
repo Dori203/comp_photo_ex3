@@ -137,6 +137,8 @@ def optimize_latent_codes(args):
         add_motion_blur(original_img,15,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
+    print("degraded_img_resized_for_perceptual shape is", degraded_img_resized_for_perceptual.shape)
+
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
@@ -148,6 +150,9 @@ def optimize_latent_codes(args):
 
 
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
+
+    print("generated_img_resized_for_perceptual shape is", generated_img_resized_for_perceptual.shape)
+
 
     perceptual_model = PerceptualModel(img_size=args.perceptual_img_size)
     generated_img_features = perceptual_model(generated_img_resized_for_perceptual)
