@@ -35,6 +35,41 @@ def generate_random_mask(img_shape, mask_size):
 
     return mask_2d[..., np.newaxis]
 
+def motion_blur_kernel_3d(kernel_size, angle):
+    """Returns a 2D image kernel for motion blur effect.
+
+    Arguments:
+    kernel_size -- the height and width of the kernel. Controls strength of blur.
+    angle -- angle in the range [0, np.pi) for the direction of the motion.
+    """
+    if kernel_size % 2 == 0:
+        raise ValueError('kernel_size must be an odd number!')
+    if angle < 0 or angle > np.pi:
+        raise ValueError('angle must be between 0 (including) and pi (not including)')
+    norm_angle = 2.0 * angle / np.pi
+    if norm_angle > 1:
+        norm_angle = 1 - norm_angle
+    half_size = kernel_size // 2
+    if abs(norm_angle) == 1:
+        p1 = (half_size, 0)
+        p2 = (half_size, kernel_size-1)
+    else:
+        alpha = np.tan(np.pi * 0.5 * norm_angle)
+        if abs(norm_angle) <= 0.5:
+            p1 = (2*half_size, half_size - int(round(alpha * half_size)))
+            p2 = (kernel_size-1 - p1[0], kernel_size-1 - p1[1])
+        else:
+            alpha = np.tan(np.pi * 0.5 * (1-norm_angle))
+            p1 = (half_size - int(round(alpha * half_size)), 2*half_size)
+            p2 = (kernel_size - 1 - p1[0], kernel_size-1 - p1[1])
+    rr, cc = line(p1[0], p1[1], p2[0], p2[1])
+    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
+    kernel[rr, cc] = 1.0
+    kernel /= kernel.sum()
+    # get kernel
+    kernel_3d = np.dstack((kernel, kernel, kernel))
+    return kernel_3d
+
 def motion_blur_kernel(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
 
@@ -112,19 +147,18 @@ def add_motion_blur(image, kernel_size, angle):
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     return result
 
-def add_motion_blur_kernel(image, kernel):
+def add_motion_blur_kernel(image, kernel_3d):
     """
     :param image: a RGB image with values in the [0, 1] range of type float64.
     :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
     :param angle: an angle in radians in the range [0, π).
     :return:
     """
-    # get kernel
-    kernel_3d = np.dstack((kernel, kernel, kernel))
+
 
     # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
     gauss_kernel = tf.convert_to_tensor(kernel_3d)
-    gauss_kernel = tf.reshape(gauss_kernel,(kernel.shape[0], kernel.shape[0], 3, 1))
+    gauss_kernel = tf.reshape(gauss_kernel,(kernel_3d.shape[0], kernel_3d.shape[0], 3, 1))
     # Convolve.
     #image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
     #image = tf.expand_dims(image, 0)
@@ -208,7 +242,7 @@ def optimize_latent_codes(args):
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
         # change image from int to float
         img = np.float32(img / 255)
-        degradation_mask = motion_blur_kernel(KERNEL_SIZE, 1)
+        degradation_mask = motion_blur_kernel_3d(KERNEL_SIZE, 1)
 
         corrupted_img = add_motion_blur_single_image(img,KERNEL_SIZE,1)
 
