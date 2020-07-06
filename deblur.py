@@ -199,7 +199,7 @@ def optimize_latent_codes(args):
     generated_img = ((generated_img + 1) / 2) * 255
 
     original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
-    degradation_mask = tf.placeholder(tf.float32, [None, args.mask_size[0], args.input_img_size[1], 1])
+    degradation_mask = tf.placeholder(tf.float32, [None, KERNEL_SIZE, KERNEL_SIZE, 3])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
         add_motion_blur_kernel(original_img,degradation_mask), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
