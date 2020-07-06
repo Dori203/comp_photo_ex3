@@ -109,7 +109,7 @@ def add_motion_blur(image, kernel_size, angle):
 
     pointwise_filter = tf.eye(3, batch_shape=[1, 1])
     print("image.shape inside deblur", image.shape)
-    result = tf.nn.conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
+    result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     print("result.shape inside deblur", result.shape)
     # for i in range(2):
     #     image[:,:,i] = tf.nn.conv2d(image[:,:,i], gauss_kernel, padding="SAME")
