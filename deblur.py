@@ -112,6 +112,28 @@ def add_motion_blur(image, kernel_size, angle):
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     return result
 
+def add_motion_blur_kernel(image, kernel):
+    """
+    :param image: a RGB image with values in the [0, 1] range of type float64.
+    :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
+    :param angle: an angle in radians in the range [0, π).
+    :return:
+    """
+    # get kernel
+    kernel_3d = np.dstack((kernel, kernel, kernel))
+
+    # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
+    gauss_kernel = tf.convert_to_tensor(kernel_3d)
+    gauss_kernel = tf.reshape(gauss_kernel,(kernel.shape[0], kernel.shape[0], 3, 1))
+    # Convolve.
+    #image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
+    #image = tf.expand_dims(image, 0)
+
+    pointwise_filter = tf.eye(3, batch_shape=[1, 1])
+    result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
+    return result
+
+
 def add_motion_blur_single_image(image, kernel_size, angle):
     """
     :param image: a RGB image with values in the [0, 1] range of type float64.
@@ -146,7 +168,7 @@ def optimize_latent_codes(args):
     degradation_mask = tf.placeholder(tf.float32, [None, args.mask_size[0], args.input_img_size[1], 1])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(original_img,KERNEL_SIZE,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        add_motion_blur_kernel(original_img,degradation_mask), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
     print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
@@ -158,7 +180,7 @@ def optimize_latent_codes(args):
     print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(generated_img_resized_to_original,KERNEL_SIZE,1), tuple(args.perceptual_img_size),
+        add_motion_blur_kernel(original_img,degradation_mask), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
@@ -186,7 +208,7 @@ def optimize_latent_codes(args):
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
         # change image from int to float
         img = np.float32(img / 255)
-        mask = motion_blur_kernel(KERNEL_SIZE, 1)
+        degradation_mask = motion_blur_kernel(KERNEL_SIZE, 1)
 
         corrupted_img = add_motion_blur_single_image(img,KERNEL_SIZE,1)
 
@@ -206,7 +228,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    #degradation_mask: mask[np.newaxis, ...]
+                    degradation_mask: degradation_mask[np.newaxis, ...]
                 }
             )
 
@@ -216,7 +238,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                #degradation_mask: mask[np.newaxis, ...]
+                degradation_mask: degradation_mask[np.newaxis, ...]
             }
         )
 
