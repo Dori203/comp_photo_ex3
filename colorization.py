@@ -14,8 +14,8 @@ import stylegan.config as config
 
 from perceptual_model import PerceptualModel
 
-STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
-
+# STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
+STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
 
 def convert_to_greyscale(rgb):
     # print("rgb shape: {}".format(rgb.shape))
