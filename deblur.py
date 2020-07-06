@@ -35,44 +35,8 @@ def generate_random_mask(img_shape, mask_size):
 
     return mask_2d[..., np.newaxis]
 
-def motion_blur_kernel_3d(kernel_size, angle):
-    """Returns a 2D image kernel for motion blur effect.
-
-    Arguments:
-    kernel_size -- the height and width of the kernel. Controls strength of blur.
-    angle -- angle in the range [0, np.pi) for the direction of the motion.
-    """
-    if kernel_size % 2 == 0:
-        raise ValueError('kernel_size must be an odd number!')
-    if angle < 0 or angle > np.pi:
-        raise ValueError('angle must be between 0 (including) and pi (not including)')
-    norm_angle = 2.0 * angle / np.pi
-    if norm_angle > 1:
-        norm_angle = 1 - norm_angle
-    half_size = kernel_size // 2
-    if abs(norm_angle) == 1:
-        p1 = (half_size, 0)
-        p2 = (half_size, kernel_size-1)
-    else:
-        alpha = np.tan(np.pi * 0.5 * norm_angle)
-        if abs(norm_angle) <= 0.5:
-            p1 = (2*half_size, half_size - int(round(alpha * half_size)))
-            p2 = (kernel_size-1 - p1[0], kernel_size-1 - p1[1])
-        else:
-            alpha = np.tan(np.pi * 0.5 * (1-norm_angle))
-            p1 = (half_size - int(round(alpha * half_size)), 2*half_size)
-            p2 = (kernel_size - 1 - p1[0], kernel_size-1 - p1[1])
-    rr, cc = line(p1[0], p1[1], p2[0], p2[1])
-    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
-    kernel[rr, cc] = 1.0
-    kernel /= kernel.sum()
-    # get kernel
-    kernel_3d = np.dstack((kernel, kernel, kernel))
-    return kernel_3d
-
 def motion_blur_kernel(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
-
     Arguments:
     kernel_size -- the height and width of the kernel. Controls strength of blur.
     angle -- angle in the range [0, np.pi) for the direction of the motion.
@@ -105,7 +69,6 @@ def motion_blur_kernel(kernel_size, angle):
 
 def random_motion_blur(image, list_of_kernel_sizes):
     """
-
     :param image: a grayscale image with values in the [0, 1] range of type float64.
     :param list_of_kernel_sizes: a list of odd integers.
     :return:
@@ -147,27 +110,6 @@ def add_motion_blur(image, kernel_size, angle):
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     return result
 
-def add_motion_blur_kernel(image, kernel_3d):
-    """
-    :param image: a RGB image with values in the [0, 1] range of type float64.
-    :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
-    :param angle: an angle in radians in the range [0, π).
-    :return:
-    """
-
-
-    # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
-    gauss_kernel = tf.convert_to_tensor(kernel_3d)
-    gauss_kernel = tf.reshape(gauss_kernel,(kernel_3d.shape[0], kernel_3d.shape[0], 3, 1))
-    # Convolve.
-    #image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
-    #image = tf.expand_dims(image, 0)
-
-    pointwise_filter = tf.eye(3, batch_shape=[1, 1])
-    result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
-    return result
-
-
 def add_motion_blur_single_image(image, kernel_size, angle):
     """
     :param image: a RGB image with values in the [0, 1] range of type float64.
@@ -199,10 +141,10 @@ def optimize_latent_codes(args):
     generated_img = ((generated_img + 1) / 2) * 255
 
     original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
-    degradation_mask = tf.placeholder(tf.float32, [None, KERNEL_SIZE, KERNEL_SIZE, 3])
+    degradation_mask = tf.placeholder(tf.float32, [None, args.mask_size[0], args.input_img_size[1], 1])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur_kernel(original_img,degradation_mask), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        add_motion_blur(original_img,KERNEL_SIZE,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
     print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
@@ -214,7 +156,7 @@ def optimize_latent_codes(args):
     print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur_kernel(original_img,degradation_mask), tuple(args.perceptual_img_size),
+        add_motion_blur(generated_img_resized_to_original,KERNEL_SIZE,1), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
@@ -241,8 +183,8 @@ def optimize_latent_codes(args):
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
         # change image from int to float
-        img = np.float32(img / 255)
-        degradation_mask = motion_blur_kernel_3d(KERNEL_SIZE, 1)
+        #img = np.float32(img / 255)
+        #mask = motion_blur_kernel(KERNEL_SIZE, 1)
 
         corrupted_img = add_motion_blur_single_image(img,KERNEL_SIZE,1)
 
@@ -262,7 +204,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    degradation_mask: degradation_mask[np.newaxis, ...]
+                    #degradation_mask: mask[np.newaxis, ...]
                 }
             )
 
@@ -272,7 +214,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                degradation_mask: degradation_mask[np.newaxis, ...]
+                #degradation_mask: mask[np.newaxis, ...]
             }
         )
 
