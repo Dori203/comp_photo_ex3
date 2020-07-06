@@ -191,7 +191,7 @@ def optimize_latent_codes(args):
         corrupted_img = add_motion_blur_single_image(img,KERNEL_SIZE,1)
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
-        imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
+        #imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
 
         sess.run(tf.variables_initializer([latent_code] + optimizer.variables()))
 
@@ -206,7 +206,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    degradation_mask: mask[np.newaxis, ...]
+                    #degradation_mask: mask[np.newaxis, ...]
                 }
             )
 
@@ -216,7 +216,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                degradation_mask: mask[np.newaxis, ...]
+                #degradation_mask: mask[np.newaxis, ...]
             }
         )
 
