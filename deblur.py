@@ -112,6 +112,30 @@ def add_motion_blur(image, kernel_size, angle):
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     return result
 
+def add_motion_blur_image(image, kernel_size, angle):
+    """
+    :param image: a RGB image with values in the [0, 1] range of type float64.
+    :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
+    :param angle: an angle in radians in the range [0, π).
+    :return:
+    """
+    # get kernel
+    kernel = motion_blur_kernel(kernel_size, angle)
+    kernel_3d = np.dstack((kernel, kernel, kernel))
+
+    # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
+    gauss_kernel = tf.convert_to_tensor(kernel_3d)
+    gauss_kernel = tf.reshape(gauss_kernel,(kernel_size, kernel_size, 3, 1))
+    # Convolve.
+    # image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
+    image = tf.expand_dims(image, 0)
+
+
+    pointwise_filter = tf.eye(3, batch_shape=[1, 1])
+    result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
+    return result
+
+
 def optimize_latent_codes(args):
     tflib.init_tf()
 
@@ -172,7 +196,7 @@ def optimize_latent_codes(args):
         img = np.float32(img / 255)
         mask = motion_blur_kernel(KERNEL_SIZE, 1)
 
-        corrupted_img = add_motion_blur(img,KERNEL_SIZE,1)
+        corrupted_img = add_motion_blur_image(img,KERNEL_SIZE,1)
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
         imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
