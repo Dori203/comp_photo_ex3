@@ -133,7 +133,7 @@ def add_motion_blur_image(image, kernel_size, angle):
 
     pointwise_filter = tf.eye(3, batch_shape=[1, 1])
     result = tf.nn.separable_conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
-    return result
+    return tf.make_ndarray(result)
 
 
 def optimize_latent_codes(args):
