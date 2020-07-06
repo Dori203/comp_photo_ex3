@@ -20,6 +20,7 @@ import random
 
 # STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
 STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
+KERNEL_SIZE = 15
 
 def generate_random_mask(img_shape, mask_size):
     mask_2d = np.ones(img_shape, dtype=np.uint8)
@@ -101,12 +102,14 @@ def add_motion_blur(image, kernel_size, angle):
 
     # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
     gauss_kernel = tf.convert_to_tensor(kernel_3d)
-    gauss_kernel = tf.reshape(gauss_kernel,(15, 15, 3, 1))
+    gauss_kernel = tf.reshape(gauss_kernel,(kernel_size, kernel_size, 3, 1))
     # Convolve.
     #image = tf.reshape(image, [3, image.shape[1], image.shape[2], 1])
     image = tf.reshape(image, [-1, image.shape[1], image.shape[2], 3])
+
+    pointwise_filter = tf.eye(3, batch_shape=[1, 1])
     print("image.shape inside deblur", image.shape)
-    result = tf.nn.conv2d(image, gauss_kernel, padding="SAME", strides=[1,1,1,1])
+    result = tf.nn.conv2d(image, gauss_kernel, pointwise_filter, padding="SAME", strides=[1,1,1,1])
     print("result.shape inside deblur", result.shape)
     # for i in range(2):
     #     image[:,:,i] = tf.nn.conv2d(image[:,:,i], gauss_kernel, padding="SAME")
@@ -134,7 +137,7 @@ def optimize_latent_codes(args):
     degradation_mask = tf.placeholder(tf.float32, [None, args.mask_size[0], args.input_img_size[1], 1])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(original_img,15,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        add_motion_blur(original_img,KERNEL_SIZE,1), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
     print("degraded_img_resized_for_perceptual shape is", degraded_img_resized_for_perceptual.shape)
@@ -144,7 +147,7 @@ def optimize_latent_codes(args):
     )
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(generated_img_resized_to_original,15,1), tuple(args.perceptual_img_size),
+        add_motion_blur(generated_img_resized_to_original,KERNEL_SIZE,1), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
 
@@ -171,9 +174,9 @@ def optimize_latent_codes(args):
     for img_name in img_names:
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
-        mask = motion_blur_kernel(15, 1)
+        mask = motion_blur_kernel(KERNEL_SIZE, 1)
 
-        corrupted_img = add_motion_blur(img,15,1)
+        corrupted_img = add_motion_blur(img,KERNEL_SIZE,1)
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
         imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
