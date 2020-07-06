@@ -152,6 +152,7 @@ def optimize_latent_codes(args):
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
 
     print("generated_img_resized_for_perceptual shape is", generated_img_resized_for_perceptual.shape)
+    print("args.perceptual_img_size shape is", args.perceptual_img_size)
 
 
     perceptual_model = PerceptualModel(img_size=args.perceptual_img_size)
