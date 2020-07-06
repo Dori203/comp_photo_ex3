@@ -52,7 +52,7 @@ def optimize_latent_codes(args):
 
 
     generated_img_resized_for_perceptual = tf.image.grayscale_to_rgb(tf.image.resize_images(
-        convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        convert_to_greyscale(generated_img_resized_to_original), tuple(args.perceptual_img_size),method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     ))
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
