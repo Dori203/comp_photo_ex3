@@ -16,6 +16,8 @@ from perceptual_model import PerceptualModel
 from scipy.ndimage.filters import convolve
 from skimage.draw import line
 import random
+import math as m
+
 
 
 # STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
@@ -42,11 +44,12 @@ def motion_blur_kernel(kernel_size, angle):
     kernel_size -- the height and width of the kernel. Controls strength of blur.
     angle -- angle in the range [0, np.pi) for the direction of the motion.
     """
+    pi = tf.constant(m.pi)
     if kernel_size % 2 == 0:
         raise ValueError('kernel_size must be an odd number!')
-    if angle < 0 or angle > np.pi:
+    if angle < 0 or angle > pi:
         raise ValueError('angle must be between 0 (including) and pi (not including)')
-    norm_angle = 2.0 * angle / np.pi
+    norm_angle = 2.0 * angle / pi
     if norm_angle > 1:
         norm_angle = 1 - norm_angle
     half_size = kernel_size // 2
@@ -54,12 +57,12 @@ def motion_blur_kernel(kernel_size, angle):
         p1 = (half_size, 0)
         p2 = (half_size, kernel_size-1)
     else:
-        alpha = np.tan(np.pi * 0.5 * norm_angle)
+        alpha = np.tan(pi * 0.5 * norm_angle)
         if abs(norm_angle) <= 0.5:
             p1 = (2*half_size, half_size - int(round(alpha * half_size)))
             p2 = (kernel_size-1 - p1[0], kernel_size-1 - p1[1])
         else:
-            alpha = np.tan(np.pi * 0.5 * (1-norm_angle))
+            alpha = np.tan(pi * 0.5 * (1-norm_angle))
             p1 = (half_size - int(round(alpha * half_size)), 2*half_size)
             p2 = (kernel_size - 1 - p1[0], kernel_size-1 - p1[1])
     rr, cc = line(p1[0], p1[1], p2[0], p2[1])
