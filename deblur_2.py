@@ -21,6 +21,20 @@ import random
 # STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
 STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
 KERNEL_SIZE = 15
+KERNEL_SIZES = [3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51]
+
+def generate_random_mask(img_shape, mask_size):
+    mask_2d = np.ones(img_shape, dtype=np.uint8)
+
+    vq = img_shape[0] // 4
+    top = np.random.randint(low=vq, high=3 * vq - mask_size[0])
+
+    hq = img_shape[1] // 4
+    left = np.random.randint(low=hq, high=3 * hq - mask_size[1])
+
+    mask_2d[top:top + mask_size[0], left:left + mask_size[1]] = 0
+
+    return mask_2d[..., np.newaxis]
 
 def motion_blur_kernel(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
@@ -54,7 +68,7 @@ def motion_blur_kernel(kernel_size, angle):
     kernel /= kernel.sum()
     return kernel
 
-def random_motion_blur(image, list_of_kernel_sizes):
+def random_motion_blur(list_of_kernel_sizes):
     """
     :param image: a grayscale image with values in the [0, 1] range of type float64.
     :param list_of_kernel_sizes: a list of odd integers.
@@ -63,16 +77,9 @@ def random_motion_blur(image, list_of_kernel_sizes):
     # sample an angle and kernel size uniformaly.
     alpha = random.uniform(0, np.pi)
     index = random.randrange(0, len(list_of_kernel_sizes))
-    # apply chosen values to image.
-    conv_image = add_motion_blur(image, list_of_kernel_sizes[index], alpha)
-    # round results.
-    conv_image *= 255
-    conv_image = np.rint(conv_image)
-    conv_image /= 255
+    # return chosen values to image.
+    return np.array([list_of_kernel_sizes[index], alpha])
 
-    # clip results to [0,1]
-    result = np.clip(conv_image, 0, 1)
-    return result
 
 def add_motion_blur(image, kernel_size, angle):
     """
@@ -128,9 +135,10 @@ def optimize_latent_codes(args):
     generated_img = ((generated_img + 1) / 2) * 255
 
     original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
+    blur_parameters = tf.placeholder(tf.float32, [None, 2])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(original_img,args.blur_parameters[0],args.blur_parameters[1]), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        add_motion_blur(original_img,blur_parameters[0],blur_parameters[1]), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
     print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
@@ -142,7 +150,7 @@ def optimize_latent_codes(args):
     print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(generated_img_resized_to_original,args.blur_parameters[0],args.blur_parameters[1]), tuple(args.perceptual_img_size),
+        add_motion_blur(generated_img_resized_to_original,blur_parameters[0],blur_parameters[1]), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
@@ -168,10 +176,12 @@ def optimize_latent_codes(args):
     for img_name in img_names:
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
-
-        corrupted_img = add_motion_blur_single_image(img,args.blur_parameters[0],args.blur_parameters[1])
+        blur_parameters = random_motion_blur(KERNEL_SIZES)
+        corrupted_img = add_motion_blur_single_image(img,blur_parameters[0],blur_parameters[1])
+        print("blur parameters are: ", blur_parameters[0], " ", blur_parameters[1])
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
+        #imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
 
         sess.run(tf.variables_initializer([latent_code] + optimizer.variables()))
 
@@ -186,6 +196,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
+                    blur_parameters: blur_parameters[np.newaxis, ...]
                 }
             )
 
@@ -195,6 +206,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
+                blur_parameters: blur_parameters[np.newaxis, ...]
             }
         )
 
@@ -212,7 +224,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--input-img-size', type=int, nargs=2, default=(256, 256))
     parser.add_argument('--perceptual-img-size', type=int, nargs=2, default=(256, 256))
-    parser.add_argument('--blur-parameters', type=int, nargs=2, default=(51, 1))
+    parser.add_argument('--mask-size', type=int, nargs=2, default=(5, 5))
     parser.add_argument('--learning-rate', type=float, default=1e-2)
     parser.add_argument('--total-iterations', type=int, default=1000)
 

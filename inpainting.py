@@ -83,6 +83,7 @@ def optimize_latent_codes(args):
 		img = cv2.resize(img, dsize=tuple(args.input_img_size))
 		mask = generate_random_mask(img.shape[:2], mask_size=args.mask_size)
 
+		print("got a new mask!")
 		corrupted_img = img * mask
 
 		imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
