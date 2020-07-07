@@ -216,7 +216,7 @@ def optimize_latent_codes(args):
     for img_name in img_names:
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
-        blur_kernel = motion_blur_kernel(args.blur_parameters[0], args.blur_parameters[1])
+        blur_kernel_3d = motion_blur_kernel(args.blur_parameters[0], args.blur_parameters[1])
         corrupted_img = add_motion_blur_single_image(img,args.blur_parameters[0],args.blur_parameters[1])
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
@@ -235,7 +235,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    blur_kernel: blur_kernel[np.newaxis, ...]
+                    blur_kernel: blur_kernel_3d[np.newaxis, ...]
                 }
             )
 
@@ -245,7 +245,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                blur_kernel: blur_kernel[np.newaxis, ...]
+                blur_kernel: blur_kernel_3d[np.newaxis, ...]
             }
         )
 
