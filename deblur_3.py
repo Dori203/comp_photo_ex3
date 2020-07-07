@@ -15,27 +15,10 @@ import stylegan.config as config
 from perceptual_model import PerceptualModel
 from scipy.ndimage.filters import convolve
 from skimage.draw import line
-import random
-import math as m
 
 
 
-# STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?id=1MEGjdvVpUsu1jB4zrXZN7Y4kBBOzizDQ'
 STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
-
-def generate_random_mask(img_shape, mask_size, kernel_size, alpha):
-    mask_2d = np.ones(img_shape, dtype=np.uint8)
-
-    vq = img_shape[0] // 4
-    top = np.random.randint(low=vq, high=3 * vq - mask_size[0])
-
-    hq = img_shape[1] // 4
-    left = np.random.randint(low=hq, high=3 * hq - mask_size[1])
-
-    mask_2d[top:top + mask_size[0], left:left + mask_size[1]] = 0
-
-    blurred_mask = add_motion_blur_single_image_grayscale(mask_2d, kernel_size, alpha)
-    return blurred_mask[..., np.newaxis]
 
 def motion_blur_kernel_1D(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
@@ -102,19 +85,6 @@ def motion_blur_kernel(kernel_size, angle):
     kernel_3d = np.dstack((kernel, kernel, kernel))
     return kernel_3d
 
-def random_motion_blur(list_of_kernel_sizes):
-    """
-    :param image: a grayscale image with values in the [0, 1] range of type float64.
-    :param list_of_kernel_sizes: a list of odd integers.
-    :return:
-    """
-    # sample an angle and kernel size uniformaly.
-    alpha = random.uniform(0, np.pi)
-    index = random.randrange(0, len(list_of_kernel_sizes))
-    # return chosen values to image.
-    return np.array([list_of_kernel_sizes[index], alpha])
-
-
 def add_motion_blur(image, kernel_3d):
     """
     :param image: a RGB image with values in the [0, 1] range of type float64.
@@ -145,21 +115,6 @@ def add_motion_blur_single_image(image, kernel_size, angle):
         image[:,:,i] = convolve(image[:,:,i], kernel, mode='nearest')
     return image
 
-def add_motion_blur_single_image_grayscale(image, kernel_size, angle):
-    """
-    :param image: a RGB image with values in the [0, 1] range of type float64.
-    :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
-    :param angle: an angle in radians in the range [0, π).
-    :return:
-    """
-    # get kernel
-    kernel = motion_blur_kernel(kernel_size, angle)
-
-    # convolve image.
-    image = convolve(image, kernel, mode='nearest')
-    return image
-
-
 def optimize_latent_codes(args):
     tflib.init_tf()
 
@@ -181,24 +136,20 @@ def optimize_latent_codes(args):
         add_motion_blur(original_img,blur_kernel), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
-    print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
 
     generated_img_resized_to_original = tf.image.resize_images(
         generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
-    print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
         add_motion_blur(generated_img_resized_to_original, blur_kernel), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-    print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
 
 
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
 
-    print("generated image shape is: ", generated_img_for_display.shape)
 
     perceptual_model = PerceptualModel(img_size=args.perceptual_img_size)
     generated_img_features = perceptual_model(generated_img_resized_for_perceptual)
