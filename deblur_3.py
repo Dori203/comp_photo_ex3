@@ -170,7 +170,7 @@ def optimize_latent_codes(args):
         name='latent_code', shape=(1, 18, 512), dtype='float32', initializer=tf.initializers.zeros()
     )
 
-    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=True)
+    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
 
