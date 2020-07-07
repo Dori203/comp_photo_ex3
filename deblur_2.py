@@ -36,7 +36,7 @@ def generate_random_mask(img_shape, mask_size, kernel_size, alpha):
 
     mask_2d[top:top + mask_size[0], left:left + mask_size[1]] = 0
 
-    blurred_mask = add_motion_blur_single_image(mask_2d, kernel_size, alpha)
+    blurred_mask = add_motion_blur_single_image_grayscale(mask_2d, kernel_size, alpha)
     return blurred_mask[..., np.newaxis]
 
 def motion_blur_kernel(kernel_size, angle):
@@ -120,6 +120,20 @@ def add_motion_blur_single_image(image, kernel_size, angle):
     # convolve image.
     for i in range(3):
         image[:,:,i] = convolve(image[:,:,i], kernel, mode='nearest')
+    return image
+
+def add_motion_blur_single_image_grayscale(image, kernel_size, angle):
+    """
+    :param image: a RGB image with values in the [0, 1] range of type float64.
+    :param kernel_size: an odd integer specifying the size of the kernel (even integers are ill-defined).
+    :param angle: an angle in radians in the range [0, π).
+    :return:
+    """
+    # get kernel
+    kernel = motion_blur_kernel(kernel_size, angle)
+
+    # convolve image.
+    image = convolve(image, kernel, mode='nearest')
     return image
 
 
