@@ -25,7 +25,7 @@ STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkca
 KERNEL_SIZE = 15
 KERNEL_SIZES = [3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51]
 
-def generate_random_mask(img_shape, mask_size):
+def generate_random_mask(img_shape, mask_size, kernel_size, alpha):
     mask_2d = np.ones(img_shape, dtype=np.uint8)
 
     vq = img_shape[0] // 4
@@ -36,7 +36,8 @@ def generate_random_mask(img_shape, mask_size):
 
     mask_2d[top:top + mask_size[0], left:left + mask_size[1]] = 0
 
-    return mask_2d[..., np.newaxis]
+    blurred_mask = add_motion_blur_single_image(mask_2d, kernel_size, alpha)
+    return blurred_mask[..., np.newaxis]
 
 def motion_blur_kernel(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
@@ -138,10 +139,10 @@ def optimize_latent_codes(args):
     generated_img = ((generated_img + 1) / 2) * 255
 
     original_img = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 3])
-    blur_parameters = tf.placeholder(tf.float32, [None, 2])
+    degradation_mask = tf.placeholder(tf.float32, [None, args.input_img_size[0], args.input_img_size[1], 1])
 
     degraded_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(original_img,blur_parameters[0],blur_parameters[1]), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        add_motion_blur(original_img,args.blur_parameters[0],args.blur_parameters[1]), tuple(args.perceptual_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
 
     print("degraded_img_resized_for_perceptual shape is: ", degraded_img_resized_for_perceptual.shape)
@@ -153,7 +154,7 @@ def optimize_latent_codes(args):
     print("generated_img_resized_to_original shape is: ", generated_img_resized_to_original.shape)
 
     generated_img_resized_for_perceptual = tf.image.resize_images(
-        add_motion_blur(generated_img_resized_to_original,blur_parameters[0],blur_parameters[1]), tuple(args.perceptual_img_size),
+        add_motion_blur(generated_img_resized_to_original,args.blur_parameters[0],args, args.blur_parameters[1]), tuple(args.perceptual_img_size),
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
     print("generated_img_resized_for_perceptual shape is: ", generated_img_resized_for_perceptual.shape)
@@ -179,9 +180,8 @@ def optimize_latent_codes(args):
     for img_name in img_names:
         img = imageio.imread(os.path.join(args.imgs_dir, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
-        blur_parameters = random_motion_blur(KERNEL_SIZES)
-        corrupted_img = add_motion_blur_single_image(img,blur_parameters[0],blur_parameters[1])
-        print("blur parameters are: ", blur_parameters[0], " ", blur_parameters[1])
+        mask = generate_random_mask(img.shape[:2], mask_size=args.mask_size, kernel_size=args.blur_parameters[0],alpha=args.blur_parameters[1])
+        corrupted_img = add_motion_blur_single_image(img,args.blur_parameters[0],args.blur_parameters[1])
 
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
         #imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
@@ -199,7 +199,7 @@ def optimize_latent_codes(args):
                 fetches=[loss_op, train_op],
                 feed_dict={
                     original_img: img[np.newaxis, ...],
-                    blur_parameters: blur_parameters[np.newaxis, ...]
+                    degradation_mask: mask[np.newaxis, ...]
                 }
             )
 
@@ -209,7 +209,7 @@ def optimize_latent_codes(args):
             fetches=[generated_img_for_display, latent_code],
             feed_dict={
                 original_img: img[np.newaxis, ...],
-                blur_parameters: blur_parameters[np.newaxis, ...]
+                degradation_mask: mask[np.newaxis, ...]
             }
         )
 
@@ -228,6 +228,7 @@ if __name__ == '__main__':
     parser.add_argument('--input-img-size', type=int, nargs=2, default=(256, 256))
     parser.add_argument('--perceptual-img-size', type=int, nargs=2, default=(256, 256))
     parser.add_argument('--mask-size', type=int, nargs=2, default=(5, 5))
+    parser.add_argument('--blur-parameters', type=int, nargs=2, default=(51, 1))
     parser.add_argument('--learning-rate', type=float, default=1e-2)
     parser.add_argument('--total-iterations', type=int, default=1000)
 
