@@ -223,7 +223,7 @@ def optimize_latent_codes(args):
         latent_code = latent_codes[0].reshape((1, 18, 512))
         print("latent code shape is: ", latent_code)
         #print("latent code value is: ", latent_code)
-        latent_1 = get_image_from_latant_code(latent_code).reshape((256, 256, 3))
+        latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3))
         print("latent image shape is: ", latent_1.shape)
         # latent_2 = get_image_from_latant_code(latent_codes[1])
         imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), latent_1)
