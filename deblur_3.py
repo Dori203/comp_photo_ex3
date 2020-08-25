@@ -134,7 +134,7 @@ def get_image_from_latant_code(latent_code):
 
 def optimize_latent_codes(args):
     tflib.init_tf()
-
+    tf.enable_eager_execution()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
 
