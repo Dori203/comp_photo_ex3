@@ -112,7 +112,7 @@ def add_motion_blur_single_image(image, kernel_size, angle):
         image[:,:,i] = convolve(image[:,:,i], kernel, mode='nearest')
     return image
 
-def get_image_from_latant_code(latent_code, image_name):
+def get_image_from_latant_code(latent_code):
     tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
@@ -120,8 +120,7 @@ def get_image_from_latant_code(latent_code, image_name):
     generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
-    imageio.imwrite(os.path.join(args.restorations_dir, image_name), generated_img)
-
+    return generated_img
 
 def optimize_latent_codes(args):
     tflib.init_tf()
@@ -208,12 +207,16 @@ def optimize_latent_codes(args):
             }
         )
 
-        imageio.imwrite(os.path.join(args.restorations_dir, img_name), reconstructed_imgs[0])
-        np.savez(file=os.path.join(args.latents_dir, img_name + '.npz'), latent_code=latent_codes[0])
         print("latent code shape is: ", latent_code.shape)
         print("latent code value is: ", latent_code)
-        get_image_from_latant_code(latent_codes[0], "latent_0")
-        get_image_from_latant_code(latent_codes[1], "latent_1")
+        latent_1 = get_image_from_latant_code(latent_codes[0])
+        latent_2 = get_image_from_latant_code(latent_codes[1])
+
+        imageio.imwrite(os.path.join(args.restorations_dir, "latent_0"), latent_1)
+        imageio.imwrite(os.path.join(args.restorations_dir, "latent_1"), latent_2)
+
+        imageio.imwrite(os.path.join(args.restorations_dir, img_name), reconstructed_imgs[0])
+        np.savez(file=os.path.join(args.latents_dir, img_name + '.npz'), latent_code=latent_codes[0])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
