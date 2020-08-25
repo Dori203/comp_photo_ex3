@@ -227,7 +227,7 @@ if __name__ == '__main__':
     parser.add_argument('--perceptual-img-size', type=int, nargs=2, default=(256, 256))
     parser.add_argument('--blur-parameters', type=int, nargs=2, default=(51, 1))
     parser.add_argument('--learning-rate', type=float, default=1e-2)
-    parser.add_argument('--total-iterations', type=int, default=100)
+    parser.add_argument('--total-iterations', type=int, default=120)
 
     args = parser.parse_args()
 
