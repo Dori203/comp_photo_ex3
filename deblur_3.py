@@ -125,7 +125,12 @@ def get_image_from_latant_code(latent_code):
     generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
-    return generated_img
+    generated_img_resized_to_original = tf.image.resize_images(
+        generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+    )
+    generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
+
+    return generated_img_for_display
 
 def optimize_latent_codes(args):
     tflib.init_tf()
@@ -217,8 +222,9 @@ def optimize_latent_codes(args):
 
         latent_code = latent_codes[0].reshape((1, 18, 512))
         print("latent code shape is: ", latent_code)
-        print("latent code value is: ", latent_code)
+        #print("latent code value is: ", latent_code)
         latent_1 = get_image_from_latant_code(latent_code)
+        print("latent image shape is: ", latent_1.shape)
         # latent_2 = get_image_from_latant_code(latent_codes[1])
         imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), latent_1)
         # imageio.imwrite(os.path.join(args.restorations_dir, "latent_1.png"), latent_2)
