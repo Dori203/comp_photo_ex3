@@ -215,8 +215,8 @@ def optimize_latent_codes(args):
         imageio.imwrite(os.path.join(args.restorations_dir, img_name), reconstructed_imgs[0])
         np.savez(file=os.path.join(args.latents_dir, img_name + '.npz'), latent_code=latent_codes[0])
 
-        print("latent code shape is: ", latent_code.shape)
-        print("latent code value is: ", latent_code)
+        print("latent code shape is: ", latent_code[0].shape)
+        print("latent code value is: ", latent_code[0])
         # latent_1 = get_image_from_latant_code(latent_codes[0])
         # latent_2 = get_image_from_latant_code(latent_codes[1])
         # imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), latent_1)
