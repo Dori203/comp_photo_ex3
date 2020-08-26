@@ -258,10 +258,10 @@ def optimize_latent_codes_source_target(args, source_latent_code):
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
 
-    latent_code = tf.get_variable(
-        name='latent_code', shape=(1, 18, 512), dtype='float32', initializer=tf.initializers.constant(source_latent_code)
+    latent_code_2 = tf.get_variable(
+        name='latent_code_2', shape=(1, 18, 512), dtype='float32', initializer=tf.initializers.constant(source_latent_code)
     )
-    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
+    generated_img = Gs.components.synthesis.get_output_for(latent_code_2, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
 
@@ -295,7 +295,7 @@ def optimize_latent_codes_source_target(args, source_latent_code):
     loss_op = tf.reduce_mean(tf.abs(generated_img_features - target_img_features))
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=args.learning_rate)
-    train_op = optimizer.minimize(loss_op, var_list=[latent_code])
+    train_op = optimizer.minimize(loss_op, var_list=[latent_code_2])
 
     sess = tf.get_default_session()
 
@@ -309,7 +309,7 @@ def optimize_latent_codes_source_target(args, source_latent_code):
         imageio.imwrite(os.path.join(args.corruptions_dir, img_name), corrupted_img)
         #imageio.imwrite(os.path.join(args.masks_dir, img_name), mask * 255)
 
-        sess.run(tf.variables_initializer([latent_code] + optimizer.variables()))
+        sess.run(tf.variables_initializer([latent_code_2] + optimizer.variables()))
 
         progress_bar_iterator = tqdm(
             iterable=range(args.total_iterations),
@@ -329,7 +329,7 @@ def optimize_latent_codes_source_target(args, source_latent_code):
             progress_bar_iterator.set_postfix_str('loss=%.2f' % loss)
 
         reconstructed_imgs, latent_codes = sess.run(
-            fetches=[generated_img_for_display, latent_code],
+            fetches=[generated_img_for_display, latent_code_2],
             feed_dict={
                 original_img: img[np.newaxis, ...],
                 blur_kernel: blur_kernel_3d[np.newaxis, ...]
@@ -338,7 +338,6 @@ def optimize_latent_codes_source_target(args, source_latent_code):
 
         imageio.imwrite(os.path.join(args.restorations_dir, img_name), reconstructed_imgs[0])
         np.savez(file=os.path.join(args.latents_dir, img_name + '.npz'), latent_code=latent_codes[0])
-
 
         return latent_codes[0]
 
