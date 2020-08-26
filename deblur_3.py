@@ -277,7 +277,8 @@ if __name__ == '__main__':
     latent_code = optimize_latent_codes(args)
 
     print("latent code shape is: ", latent_code.shape)
+    latent_code = latent_code.reshape((1, 18, 512))
+    print("latent code shape after reshape is: ", latent_code.shape)
     get_image_from_latant_code(latent_code)
-    # latent_code = latent_codes[0].reshape((1, 18, 512))
     # #print("latent code value is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
