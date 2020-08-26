@@ -135,9 +135,9 @@ def get_image_from_latant_code(latent_code):
 
     graph = tf.get_default_graph()
     with tf.Session(graph=graph) as sess1:
-        reconstructed_imgs = sess1.run(
-            fetches=generated_img_for_display
-        )
+        sess1.run(tf.variables_initializer())
+        reconstructed_imgs = sess1.run(fetches=generated_img_for_display)
+
 
         imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
         # latent_code = latent_codes[0].reshape((1, 18, 512))
