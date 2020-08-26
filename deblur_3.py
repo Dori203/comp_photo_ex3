@@ -138,7 +138,7 @@ def get_image_from_latant_code(latent_code):
     sess.run(tf.variables_initializer([]))
     reconstructed_imgs = sess.run(fetches=generated_img_for_display)
 
-
+    print("final image shape is:", reconstructed_imgs.shape)
     imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
     # latent_code = latent_codes[0].reshape((1, 18, 512))
     # print("latent code shape is: ", latent_code)
