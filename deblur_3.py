@@ -133,6 +133,7 @@ def get_image_from_latant_code(latent_code):
     return generated_img_for_display
 
 def optimize_latent_codes(args):
+    tf.enable_eager_execution()
     tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
@@ -230,7 +231,6 @@ def optimize_latent_codes(args):
 
 
 if __name__ == '__main__':
-    tf.enable_eager_execution()
     parser = argparse.ArgumentParser()
     parser.add_argument('--imgs-dir', type=str, required=True)
     parser.add_argument('--masks-dir', type=str, required=True)
