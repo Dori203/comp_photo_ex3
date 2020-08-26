@@ -230,6 +230,7 @@ def optimize_latent_codes(args):
 
 
 if __name__ == '__main__':
+    tf.enable_eager_execution()
     parser = argparse.ArgumentParser()
     parser.add_argument('--imgs-dir', type=str, required=True)
     parser.add_argument('--masks-dir', type=str, required=True)
