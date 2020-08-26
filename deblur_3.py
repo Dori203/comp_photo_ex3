@@ -116,7 +116,7 @@ def add_motion_blur_single_image(image, kernel_size, angle):
         image[:,:,i] = convolve(image[:,:,i], kernel, mode='nearest')
     return image
 
-def get_image_from_latant_code(latent_code):
+def get_image_from_latant_code(latent_code, file_name):
     tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
@@ -139,7 +139,7 @@ def get_image_from_latant_code(latent_code):
     reconstructed_imgs = sess.run(fetches=generated_img_for_display)
 
     print("final image shape is:", reconstructed_imgs.shape)
-    imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs[0])
+    imageio.imwrite(os.path.join(args.restorations_dir, file_name), reconstructed_imgs[0])
     # latent_code = latent_codes[0].reshape((1, 18, 512))
     # print("latent code shape is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code), (256, 256, 3)).numpy()
@@ -278,8 +278,13 @@ if __name__ == '__main__':
 
     print("latent code shape is: ", latent_code.shape)
     latent_code = latent_code.reshape((1, 18, 512))
+    latent_zeros = np.zeros(latent_code.shape)
+    latent_interp = (latent_code + latent_zeros)/2
     print("latent code shape after reshape is: ", latent_code.shape)
     #tf.reset_default_graph()
-    get_image_from_latant_code(latent_code)
+    get_image_from_latant_code(latent_code, "latent_0.png")
+    get_image_from_latant_code(latent_zeros, "latent_zeros.png")
+    get_image_from_latant_code(latent_interp, "latent_interp.png")
+
     # #print("latent code value is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
