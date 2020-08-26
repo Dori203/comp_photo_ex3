@@ -9,7 +9,7 @@ import tensorflow as tf
 import cv2
 
 from stylegan import dnnlib as dnnlib
-# import stylegan.dnnlib.tflib as tflib
+import stylegan.dnnlib.tflib as tflib
 import stylegan.config as config
 
 from perceptual_model import PerceptualModel
@@ -117,25 +117,40 @@ def add_motion_blur_single_image(image, kernel_size, angle):
     return image
 
 def get_image_from_latant_code(latent_code):
-    #tflib.init_tf()
+    tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
 
     print(latent_code.shape)
 
-    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
+    original_latent = tf.placeholder(tf.float32, shape=(1, 18, 512))
+    generated_img = Gs.components.synthesis.get_output_for(original_latent, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
     generated_img_resized_to_original = tf.image.resize_images(
-        generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
-    )
+            generated_img, tuple(args.input_img_size), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        )
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
 
-    return generated_img_for_display
+
+    graph = tf.get_default_graph()
+    with tf.Session(graph=graph) as sess1:
+        reconstructed_imgs = sess1.run(
+            fetches=generated_img_for_display,
+            feed_dict={
+                original_latent: latent_code[np.newaxis, ...],
+            }
+        )
+
+        imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
+        # latent_code = latent_codes[0].reshape((1, 18, 512))
+        # print("latent code shape is: ", latent_code)
+        # latent_1 = tf.reshape(get_image_from_latant_code(latent_code), (256, 256, 3)).numpy()
+        # print("latent image shape is: ", latent_1.shape)
 
 def optimize_latent_codes(args):
     #tf.enable_eager_execution()
-    #tflib.init_tf()
+    tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
 
@@ -221,14 +236,23 @@ def optimize_latent_codes(args):
         imageio.imwrite(os.path.join(args.restorations_dir, img_name), reconstructed_imgs[0])
         np.savez(file=os.path.join(args.latents_dir, img_name + '.npz'), latent_code=latent_codes[0])
 
-        latent_code = latent_codes[0].reshape((1, 18, 512))
-        print("latent code shape is: ", latent_code)
-        #print("latent code value is: ", latent_code)
-        latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
-        print("latent image shape is: ", latent_1.shape)
-        # latent_2 = get_image_from_latant_code(latent_codes[1])
-        imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), latent_1)
-        # imageio.imwrite(os.path.join(args.restorations_dir, "latent_1.png"), latent_2)
+
+        return latent_codes[0]
+        # g = tf.Graph()
+
+        # with g.as_default():
+        #     # Define operations and tensors in `g`.
+        #     c = tf.constant(30.0)
+
+
+        # latent_code = latent_codes[0].reshape((1, 18, 512))
+        # print("latent code shape is: ", latent_code)
+        # #print("latent code value is: ", latent_code)
+        # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
+        # print("latent image shape is: ", latent_1.shape)
+        # # latent_2 = get_image_from_latant_code(latent_codes[1])
+        # # imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), latent_1)
+        # # imageio.imwrite(os.path.join(args.restorations_dir, "latent_1.png"), latent_2)
 
 
 if __name__ == '__main__':
@@ -253,4 +277,10 @@ if __name__ == '__main__':
     os.makedirs(args.restorations_dir, exist_ok=True)
     os.makedirs(args.latents_dir, exist_ok=True)
 
-    optimize_latent_codes(args)
+    latent_code = optimize_latent_codes(args)
+
+    print("latent code shape is: ", latent_code)
+    get_image_from_latant_code(latent_code)
+    # latent_code = latent_codes[0].reshape((1, 18, 512))
+    # #print("latent code value is: ", latent_code)
+    # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
