@@ -301,7 +301,7 @@ def optimize_latent_codes_source_target(args, source_latent_code):
 
     img_names = sorted(os.listdir(args.imgs_dir_second))
     for img_name in img_names:
-        img = imageio.imread(os.path.join(args.imgs_dir, img_name))
+        img = imageio.imread(os.path.join(args.imgs_dir_second, img_name))
         img = cv2.resize(img, dsize=tuple(args.input_img_size))
         blur_kernel_3d = motion_blur_kernel(args.blur_parameters[0], args.blur_parameters[1])
         corrupted_img = add_motion_blur_single_image(img,args.blur_parameters[0],args.blur_parameters[1])
