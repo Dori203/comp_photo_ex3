@@ -9,7 +9,7 @@ import tensorflow as tf
 import cv2
 
 from stylegan import dnnlib as dnnlib
-import stylegan.dnnlib.tflib as tflib
+# import stylegan.dnnlib.tflib as tflib
 import stylegan.config as config
 
 from perceptual_model import PerceptualModel
