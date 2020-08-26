@@ -133,18 +133,17 @@ def get_image_from_latant_code(latent_code):
     generated_img_for_display = tf.saturate_cast(generated_img_resized_to_original, tf.uint8)
 
 
-    graph = tf.get_default_graph()
-    with tf.Session(graph=graph) as sess1:
-        tf.global_variables_initializer()
-        sess1.run(tf.variables_initializer([]))
-        reconstructed_imgs = sess1.run(fetches=generated_img_for_display)
+    sess = tf.get_default_session()
+    #tf.global_variables_initializer()
+    sess.run(tf.variables_initializer([]))
+    reconstructed_imgs = sess.run(fetches=generated_img_for_display)
 
 
-        imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
-        # latent_code = latent_codes[0].reshape((1, 18, 512))
-        # print("latent code shape is: ", latent_code)
-        # latent_1 = tf.reshape(get_image_from_latant_code(latent_code), (256, 256, 3)).numpy()
-        # print("latent image shape is: ", latent_1.shape)
+    imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
+    # latent_code = latent_codes[0].reshape((1, 18, 512))
+    # print("latent code shape is: ", latent_code)
+    # latent_1 = tf.reshape(get_image_from_latant_code(latent_code), (256, 256, 3)).numpy()
+    # print("latent image shape is: ", latent_1.shape)
 
 def optimize_latent_codes(args):
     #tf.enable_eager_execution()
