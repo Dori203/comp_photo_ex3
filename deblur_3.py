@@ -135,7 +135,7 @@ def get_image_from_latant_code(latent_code):
 
     graph = tf.get_default_graph()
     with tf.Session(graph=graph) as sess1:
-        sess1.run(tf.variables_initializer())
+        sess1.run(tf.variables_initializer([]))
         reconstructed_imgs = sess1.run(fetches=generated_img_for_display)
 
 
