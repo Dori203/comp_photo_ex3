@@ -116,7 +116,7 @@ def add_motion_blur_single_image(image, kernel_size, angle):
     return image
 
 def get_image_from_latant_code(latent_code):
-    tflib.init_tf()
+    #tflib.init_tf()
     with dnnlib.util.open_url(STYLEGAN_MODEL_URL, cache_dir=config.cache_dir) as f:
         _G, _D, Gs = pickle.load(f)
 
