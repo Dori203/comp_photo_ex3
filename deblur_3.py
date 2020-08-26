@@ -18,7 +18,8 @@ from skimage.draw import line
 
 
 
-STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
+#STYLEGAN_MODEL_URL = 'https://drive.google.com/uc?export=download&id=1vUpawbqkcaS2jM_Q0DLfL83dk1mLx_wl'
+STYLEGAN_MODEL_URL = 'https://norod78.s3-eu-west-1.amazonaws.com/models/stylegan2-ffhq-config-f.pkl'
 
 def motion_blur_kernel_1D(kernel_size, angle):
     """Returns a 2D image kernel for motion blur effect.
