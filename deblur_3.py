@@ -123,8 +123,8 @@ def get_image_from_latant_code(latent_code):
 
     print(latent_code.shape)
 
-    original_latent = tf.placeholder(tf.float32, shape=(1, 18, 512))
-    generated_img = Gs.components.synthesis.get_output_for(original_latent, randomize_noise=False)
+    latent_code = tf.constant(latent_code)
+    generated_img = Gs.components.synthesis.get_output_for(latent_code, randomize_noise=False)
     generated_img = tf.transpose(generated_img, [0, 2, 3, 1])
     generated_img = ((generated_img + 1) / 2) * 255
     generated_img_resized_to_original = tf.image.resize_images(
@@ -136,10 +136,7 @@ def get_image_from_latant_code(latent_code):
     graph = tf.get_default_graph()
     with tf.Session(graph=graph) as sess1:
         reconstructed_imgs = sess1.run(
-            fetches=generated_img_for_display,
-            feed_dict={
-                original_latent: latent_code[np.newaxis, ...],
-            }
+            fetches=generated_img_for_display
         )
 
         imageio.imwrite(os.path.join(args.restorations_dir, "latent_0.png"), reconstructed_imgs)
