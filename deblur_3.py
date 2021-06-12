@@ -384,7 +384,7 @@ if __name__ == '__main__':
     # get_image_from_latant_code(second, "latent_zeros.png")
     # get_image_from_latant_code(latent_interp, "latent_interp.png")
 
-    with os.open('data.json', 'w') as f:
+    with os.open('data.json', os.O_RDWR|os.O_CREAT) as f:
         json.dump(latent_code, f, ensure_ascii=False, indent=4)
     # #print("latent code value is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
