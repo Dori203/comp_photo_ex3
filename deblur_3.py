@@ -381,10 +381,10 @@ if __name__ == '__main__':
     print("latent code shape after reshape is: ", latent_code.shape)
     #tf.reset_default_graph()
     get_image_from_latant_code(latent_code, "latent_0.png")
-    get_image_from_latant_code(second, "latent_zeros.png")
-    get_image_from_latant_code(latent_interp, "latent_interp.png")
+    # get_image_from_latant_code(second, "latent_zeros.png")
+    # get_image_from_latant_code(latent_interp, "latent_interp.png")
 
-    with open('data.json', 'w', encoding='utf-8') as f:
+    with os.open('data.json', 'w') as f:
         json.dump(latent_code, f, ensure_ascii=False, indent=4)
     # #print("latent code value is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
