@@ -384,7 +384,8 @@ if __name__ == '__main__':
     # get_image_from_latant_code(second, "latent_zeros.png")
     # get_image_from_latant_code(latent_interp, "latent_interp.png")
 
+    y = latent_code.tolist().encode('utf-8')
     with open(os.path.join(args.restorations_dir, 'jsondata.json'), 'w') as f:
-        f.write(latent_code.tolist())
+        f.write(str(y))
     # #print("latent code value is: ", latent_code)
     # latent_1 = tf.reshape(get_image_from_latant_code(latent_code),(256, 256, 3)).numpy()
